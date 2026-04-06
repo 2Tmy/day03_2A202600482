@@ -13,7 +13,7 @@ class LLMProvider(ABC):
         self.api_key = api_key
 
     @abstractmethod
-    def generate(self, prompt: str, system_prompt: Optional[str] = None) -> Dict[str, Any]:
+    def generate(self, prompt: str, system_prompt: Optional[str] = None, run_type: Optional[str] = None) -> Dict[str, Any]:
         """
         Produce a non-streaming completion.
         Returns:
@@ -25,6 +25,7 @@ class LLMProvider(ABC):
         pass
 
     @abstractmethod
-    def stream(self, prompt: str, system_prompt: Optional[str] = None) -> Generator[str, None, None]:
-        """Produce a streaming completion."""
+    def stream(self, prompt: str, system_prompt: Optional[str] = None, run_type: Optional[str] = None) -> Generator[str, None, None]:
+        """Produce a streaming completion. `run_type` is optional and may be
+        used by implementations to tag metrics or logs (e.g., 'chatbot' vs 'agent')."""
         pass

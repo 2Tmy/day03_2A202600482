@@ -38,10 +38,13 @@ load_dotenv()
 def main():
     print("🚀 Initializing AI Lab ReAct Agent (Powered by Local LLM)...")
     
-    # INITIALIZE LOCAL MODEL
-    # Get model path from .env, or use the default fallback
-    #model_path = os.getenv("LOCAL_MODEL_PATH", "./models/Phi-3-mini-4k-instruct-q4.gguf")
-    llm = GeminiProvider(model_name="gemini-2.5-flash")
+    # INITIALIZE LLM (choose provider via DEFAULT_PROVIDER env var)
+    provider_choice = os.getenv("DEFAULT_PROVIDER", "local").lower()
+    if provider_choice == "local":
+        model_path = os.getenv("LOCAL_MODEL_PATH", "./models/Phi-3-mini-4k-instruct-q4.gguf")
+        llm = LocalProvider(model_path=model_path)
+    else:
+        llm = GeminiProvider(model_name=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"), api_key=os.getenv("GEMINI_API_KEY"))
     
     # ==========================================
     # 3. CONFIGURE THE TOOLSET

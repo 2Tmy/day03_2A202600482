@@ -2,13 +2,14 @@ import time
 from typing import Dict, Any, Optional, Generator
 from openai import OpenAI
 from src.core.llm_provider import LLMProvider
+from src.telemetry.metrics import tracker
 
 class OpenAIProvider(LLMProvider):
     def __init__(self, model_name: str = "gpt-4o", api_key: Optional[str] = None):
         super().__init__(model_name, api_key)
         self.client = OpenAI(api_key=self.api_key)
 
-    def generate(self, prompt: str, system_prompt: Optional[str] = None) -> Dict[str, Any]:
+    def generate(self, prompt: str, system_prompt: Optional[str] = None, run_type: Optional[str] = None) -> Dict[str, Any]:
         start_time = time.time()
         
         messages = []
@@ -32,6 +33,13 @@ class OpenAIProvider(LLMProvider):
             "total_tokens": response.usage.total_tokens
         }
 
+        # Track telemetry (allows run_type to be attached)
+        try:
+            tracker.track_request("openai", self.model_name, usage, latency_ms, run_type=run_type)
+        except Exception:
+            # Telemetry must not break the provider; swallow errors but continue
+            pass
+
         return {
             "content": content,
             "usage": usage,
@@ -39,7 +47,7 @@ class OpenAIProvider(LLMProvider):
             "provider": "openai"
         }
 
-    def stream(self, prompt: str, system_prompt: Optional[str] = None) -> Generator[str, None, None]:
+    def stream(self, prompt: str, system_prompt: Optional[str] = None, run_type: Optional[str] = None) -> Generator[str, None, None]:
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})

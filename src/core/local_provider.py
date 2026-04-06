@@ -3,6 +3,7 @@ import os
 from typing import Dict, Any, Optional, Generator
 from llama_cpp import Llama
 from src.core.llm_provider import LLMProvider
+from src.telemetry.metrics import tracker
 
 class LocalProvider(LLMProvider):
     """
@@ -30,7 +31,7 @@ class LocalProvider(LLMProvider):
             verbose=False
         )
 
-    def generate(self, prompt: str, system_prompt: Optional[str] = None) -> Dict[str, Any]:
+    def generate(self, prompt: str, system_prompt: Optional[str] = None, run_type: Optional[str] = None) -> Dict[str, Any]:
         start_time = time.time()
         
         # Phi-3 / Llama-3 style formatting if not handled by a template
@@ -57,6 +58,8 @@ class LocalProvider(LLMProvider):
             "total_tokens": response["usage"]["total_tokens"]
         }
 
+        tracker.track_request("local", self.llm.model_path if hasattr(self.llm,'model_path') else self.model_name, usage, latency_ms, run_type=run_type)
+
         return {
             "content": content,
             "usage": usage,
@@ -64,7 +67,7 @@ class LocalProvider(LLMProvider):
             "provider": "local"
         }
 
-    def stream(self, prompt: str, system_prompt: Optional[str] = None) -> Generator[str, None, None]:
+    def stream(self, prompt: str, system_prompt: Optional[str] = None, run_type: Optional[str] = None) -> Generator[str, None, None]:
         full_prompt = prompt
         if system_prompt:
             full_prompt = f"<|system|>\n{system_prompt}<|end|>\n<|user|>\n{prompt}<|end|>\n<|assistant|>"
